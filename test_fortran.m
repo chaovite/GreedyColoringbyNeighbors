@@ -17,6 +17,7 @@ disp('Coloring for a regular Quad mesh:')
 % write ELEM file for color_exe
 ELEM_FILE = 'ELEM_regquad.dat';
 COLOR_FILE = 'COLOR_regquad.dat';
+max_neighbor = 50;
 NEB_FILE  = 'NEB_regquad.dat';
 
 writeELEM(ELEM', ELEM_FILE);
@@ -25,7 +26,7 @@ nthreads = 4;
 % Do the coloring using the matlab script
 [C, ne, NumberOfColors]=GreedyColoringbyNeighbors(ELEM', NODE', nthreads);
 % Do the coloring using the fortran script
-cmd = sprintf('./color_exe  %s %d %s %s > log.txt',  ELEM_FILE, nthreads, COLOR_FILE, NEB_FILE);
+cmd = sprintf('./color_exe  %s %d %s %d %s > log.txt',  ELEM_FILE, nthreads, COLOR_FILE, max_neighbor, NEB_FILE);
 system(cmd);
 
 % read COLOR_FILE, and NEB_FILE and compare.
@@ -52,9 +53,9 @@ for nthreads=2:2:6
     [C, ne, NumberOfColors]=GreedyColoringbyNeighbors(ELEM',NODE', nthreads);
     
     % Do the coloring using the fortran script
-    cmd = sprintf('./color_exe  %s %d %s %s > log.txt',  ELEM_FILE, nthreads, COLOR_FILE, NEB_FILE);
+    cmd = sprintf('./color_exe  %s %d %s %d %s > log.txt',  ELEM_FILE, nthreads, COLOR_FILE, max_neighbor, NEB_FILE);
     system(cmd);
-
+    
     % read COLOR_FILE, and NEB_FILE and compare.
     C_Fortran = importdata(COLOR_FILE);
     ne_Fortran = importdata(NEB_FILE);
@@ -81,9 +82,9 @@ for nthreads=8:8:16
     [C,ne,NumberOfColors]=GreedyColoringbyNeighbors(ELEM',NODE',nthreads);
     
     % Do the coloring using the fortran script
-    cmd = sprintf('./color_exe  %s %d %s %s > log.txt',  ELEM_FILE, nthreads, COLOR_FILE, NEB_FILE);
+    cmd = sprintf('./color_exe  %s %d %s %d %s > log.txt',  ELEM_FILE, nthreads, COLOR_FILE, max_neighbor, NEB_FILE);
     system(cmd);
-
+    
     % read COLOR_FILE, and NEB_FILE and compare.
     C_Fortran = importdata(COLOR_FILE);
     ne_Fortran = importdata(NEB_FILE);

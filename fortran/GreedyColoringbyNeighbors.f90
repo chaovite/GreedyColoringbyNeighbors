@@ -12,7 +12,7 @@
 !     gfortran GreedyColoringbyNeighbors.F90 -o color_exe
 !
 ! To run:
-!     ./color_exe ELEM.dat nthreads COLOR.dat [NEB.dat]
+!     ./color_exe ELEM.dat nthreads COLOR.dat [max_neb NEB.dat]
 !
 ! ================================================================ 
 !           Written by Chao Liang, Nov 7th, 2021
@@ -24,10 +24,10 @@ PROGRAM GreedyColoringbyNeighbors
   CHARACTER(len=80)   :: ARG, ELEM_FILE, COLOR_FILE, NEB_FILE
   INTEGER, ALLOCATABLE :: ELEM(:,:), NEB(:,:), Colors(:)
   INTEGER :: NEL, NNODE 
-  INTEGER, PARAMETER :: max_neighbor = 50 
+  INTEGER :: max_neighbor 
 
   ! Get input parameters from command line arguments
-  call ReadCommandLineInput(ELEM_FILE, nthreads, COLOR_FILE, NEB_FILE)
+  call ReadCommandLineInput(ELEM_FILE, nthreads, COLOR_FILE, max_neighbor, NEB_FILE)
   
   ! Read in the first line of ELEM_FILE to obtain NEL, NNODE
   call Get_ELEM_SIZE(NEL, NNODE, ELEM_FILE)
@@ -64,20 +64,22 @@ PROGRAM GreedyColoringbyNeighbors
   deallocate(ELEM, NEB, Colors)
 
   contains
-      subroutine ReadCommandLineInput(ELEM_FILE, nthreads, COLOR_FILE, NEB_FILE)
+      subroutine ReadCommandLineInput(ELEM_FILE, nthreads, & 
+                           COLOR_FILE, max_neighbor, NEB_FILE)
           CHARACTER(len=80) :: arg
           CHARACTER(len=80), intent(out) :: ELEM_FILE, COLOR_FILE, NEB_FILE
-          INTEGER, intent(out) :: nthreads
+          INTEGER, intent(out) :: nthreads, max_neighbor 
           INTEGER :: i
 
           ! set default parameters
           nthreads   = 2
           ELEM_FILE  = 'ELEM.dat'
           COLOR_FILE = 'COLOR.dat'
+          max_neighbor = 50
           NEB_FILE   = '' ! do not output NEB_FILE
 
           ! read input from the command lines
-          DO i = 1, 4
+          DO i = 1, 5
             CALL get_command_argument(i, arg)
             IF (LEN_TRIM(arg) > 0) then
                 SELECT CASE(i)
@@ -92,6 +94,8 @@ PROGRAM GreedyColoringbyNeighbors
                     read(arg,*) COLOR_FILE
                     COLOR_FILE = TRIM(COLOR_FILE)
                 CASE(4)
+                    read(arg,*) max_neighbor
+                CASE(5)
                     ! read in the COLOR.dat filename
                     read(arg,*) NEB_FILE
                     NEB_FILE = TRIM(NEB_FILE)
@@ -107,10 +111,11 @@ PROGRAM GreedyColoringbyNeighbors
       write(*, *)
       write(*, '(A)')     "---------------------------------------"
       write(*, '(A)')     "Reading inputs from command line ......"
-      write(*, '(A, A)')  "ELEM_FILE  = ", ELEM_FILE
-      write(*, '(A, I3)') "NTHREADS   = ", NTHREADS
-      write(*, '(A, A)')  "COLOR_FILE = ", COLOR_FILE
-      write(*, '(A, A)')  "NEB_FILE   = ", NEB_FILE
+      write(*, '(A, A)')  "ELEM_FILE     = ", ELEM_FILE
+      write(*, '(A, I3)') "NTHREADS      = ", NTHREADS
+      write(*, '(A, I3)') "MAX_NEIGHBOR  = ", max_neighbor
+      write(*, '(A, A)')  "COLOR_FILE    = ", COLOR_FILE
+      write(*, '(A, A)')  "NEB_FILE      = ", NEB_FILE
       write(*, '(A)')     "---------------------------------------"
       write(*, *)
       end subroutine ReadCommandLineInput
@@ -143,10 +148,10 @@ PROGRAM GreedyColoringbyNeighbors
       ! find the neighboring elements for each element
       subroutine FindNeighbors(ELEM, NEB)  
           INTEGER, INTENT(IN):: ELEM(:, :)
-          INTEGER, INTENT(OUT):: NEB(max_neighbor, size(ELEM, 2))
+         INTEGER, INTENT(INOUT):: NEB(:,:)
           ! the first dimension of NEB must be large than 
           ! maximum number of neighbors, I set it to be max_neighbor
-          INTEGER :: i, j, k, NEL, i_node, cnt_i, n2e(max_neighbor)
+          INTEGER :: i, j, k, NEL, i_node, cnt_i, n2e(size(NEB, 1))
           INTEGER :: e_i, e_j
           INTEGER, allocatable :: node2el(:,:), cnt1(:)
           Integer, allocatable :: tmp(:)
@@ -208,7 +213,7 @@ PROGRAM GreedyColoringbyNeighbors
           INTEGER, INTENT(IN)  :: NEB(:,:), nthreads
           INTEGER, INTENT(OUT) :: NColor, Colors(size(NEB, 2))
           INTEGER :: NEL, i, j, ColorCount(size(NEB, 2))
-          INTEGER :: BlockedColors(max_neighbor), Neighbors(max_neighbor)
+          INTEGER :: BlockedColors(size(NEB,1)), Neighbors(size(NEB,1))
           LOGICAL :: isfree
           INTEGER, allocatable :: tmp(:)
 
