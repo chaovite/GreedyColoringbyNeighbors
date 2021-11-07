@@ -10,15 +10,18 @@
 % original scripts by Tomas Zegard to be consistent with faster access in
 % fortran arrays.
 %
+% Also, note that, for coloring purposes, only ELEM array is necessary.
+% NODE is used for visualizing the colored mesh.
+%
 % ELEM : element connectivity [NNODE_PER_ELEM, NEL]
 % NODE: nodal coordinates [DIM, NNODE]
 % threads: number of threads.
-%
 %
 % These helper functions avoid computing the communication matrix, which
 % can be a waste of memory. Instead, I use a [8, NEL] array to describe
 % the neighboring elements for each element, drastically more efficient in
 % memory storage and searching.
+%
 %
 
 function [C,ne,NumberOfColors]=GreedyColoringbyNeighbors(ELEM, NODE, threads)
@@ -31,7 +34,7 @@ return
 function []=PlotColoring(ELEM,NODE,C,NumberOfColors,threads)
 RGBColor=hsv(NumberOfColors);
 EdgeColor=[0 0 0];
-EdgeColor='none';
+% EdgeColor='none';
 figure, hold on, axis off, axis equal
 for i=1:size(ELEM,2)
     XY=NODE(:, ELEM(:,i));
@@ -92,6 +95,7 @@ return
 
 %% Function that computes the neighboring elements
 function ne=FindNeigbors(ELEM)
+
 % ne: 8 * nel array
 nel = size(ELEM,2);
 nnode = max(max(ELEM));
