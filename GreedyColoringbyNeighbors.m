@@ -16,17 +16,25 @@
 % ELEM : element connectivity [NNODE_PER_ELEM, NEL]
 % NODE: nodal coordinates [DIM, NNODE]
 % threads: number of threads.
+% max_neb: maximum number of neigboring element that share a element or a node.
+%
+% The number max_neb is chosen to be large enough 
+% but still substantially smaller than total number of nodes or element,
+% default is 50.
 %
 % These helper functions avoid computing the communication matrix, which
-% can be a waste of memory. Instead, I use a [8, NEL] array to describe
+% can be a waste of memory. Instead, I use a [max_neb, NEL] array to describe
 % the neighboring elements for each element, drastically more efficient in
 % memory storage and searching.
 %
-%
 
-function [C,ne,NumberOfColors]=GreedyColoringbyNeighbors(ELEM, NODE, threads)
-ne=FindNeigbors(ELEM);
-[C,NumberOfColors]=ColorbyNeighbors(ne,threads);
+
+function [C,ne,NumberOfColors]=GreedyColoringbyNeighbors(ELEM, NODE, threads, max_neb)
+if nargin<4
+    max_neb = 50;
+end
+ne=FindNeigbors(ELEM, max_neb);
+[C,NumberOfColors]=ColorbyNeighbors(ne,threads,max_neb);
 PlotColoring(ELEM,NODE,C,NumberOfColors,threads)
 return
 
@@ -47,7 +55,7 @@ title(['Coloring for ' num2str(length(C)) ' elements using ' ...
 return
     
 %% Function that colors the elements using the Greedy Algorithm
-function [C,NumberOfColors]=ColorbyNeighbors(ne,threads)
+function [C,NumberOfColors]=ColorbyNeighbors(ne,threads,max_neb)
 
 % mark the first element as color 1
 nel = size(ne,2);
@@ -60,7 +68,7 @@ ColorCount(1) = 1;
 
 % loop through the 2nd to the last element
 for i=2:nel
-    BlockedColors  = ones(1,8)*-1;
+    BlockedColors  = ones(1, max_neb)*-1;
     Neighbors=ne(:, i);% find the neighbors of element i
     for j=1:length(Neighbors) % loop through neigbors
         if (Neighbors(j)<=0) 
@@ -94,27 +102,27 @@ end
 return
 
 %% Function that computes the neighboring elements
-function ne=FindNeigbors(ELEM)
+function ne=FindNeigbors(ELEM,max_neb)
 
-% ne: 8 * nel array
+% ne: 50 * nel array
 nel = size(ELEM,2);
 nnode = max(max(ELEM));
 
-node2el = zeros(4, nnode); % each node can be owned by maximum 4 elements
+node2el = zeros(max_neb, nnode); % each node can be owned by maximum 4 elements
 cnt         = zeros(1, nnode);
 
 for i = 1: nel
     nodes = ELEM(:, i);
     for j = 1: length(nodes)
         i_node = nodes(j);
-        if isempty(find(node2el(i_node)==i, 1))
+        if isempty(find(node2el(:,i_node)==i, 1))
             cnt(i_node) = cnt(i_node) + 1;
             node2el(cnt(i_node),i_node) = i;
         end
     end
 end
 
-ne  = ones(8, nel)*-1; %initialize to be zero
+ne  = ones(max_neb, nel)*-1; %initialize to be -1
 cnt2 = zeros(1, nel); % number of neighbors
 
 for i = 1:nnode 
