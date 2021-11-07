@@ -6,9 +6,11 @@ These helper functions avoid computing the communication matrix, which can be a 
 I also add a fortran version of the program that takes in the connectivity array written in a text file and output the colors in text file. 
 
 To compile:
+
 `gfortran fortran/GreedyColoringbyNeighbors.f90 -o color_exe`
 
 To run:
+
 `./color_exe ELEM_FILE nthreads COLOR_FILE [max_neb] [NEB_FILE]`
 
 Both `max_neb=50` and `NEB_FILE=''` are optional. 
