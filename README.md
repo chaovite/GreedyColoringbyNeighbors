@@ -11,4 +11,4 @@ To compile:
 To run:
 `./color_exe ELEM_FILE nthreads COLOR_FILE [max_neb] [NEB_FILE]`
 
-Both `max_neb=50` and `BEB_FILE=''` are optional. 
+Both `max_neb=50` and `NEB_FILE=''` are optional. 
